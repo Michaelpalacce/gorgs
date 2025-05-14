@@ -1,6 +1,10 @@
 package gorgs
 
-import "flag"
+import (
+	"flag"
+)
+
+type GorgsOptions func(*Gorgs) error
 
 // WithUsage can be used to add extra usage information to the current command
 func WithUsage(usage string) GorgsOptions {
@@ -24,6 +28,14 @@ func WithFs(fs *flag.FlagSet) GorgsOptions {
 	return func(a *Gorgs) error {
 		a.fs = fs
 		fs.Usage = a.GetUsage
+		return nil
+	}
+}
+
+// WithPrinter can be used to overwrite the default Gorgs printer (fmt.Printf)
+func WithPrinter(printer Printer) GorgsOptions {
+	return func(g *Gorgs) error {
+		g.printer = printer
 		return nil
 	}
 }
