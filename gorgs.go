@@ -120,7 +120,7 @@ func (a *Gorgs) GetUsage() {
 	_, _ = a.printer("%s\n", a.usage)
 
 	if len(a.opts) > 0 {
-		_, _ = a.printer("Options:")
+		_, _ = a.printer("Options:\n")
 	}
 
 	for _, o := range a.opts {
