@@ -13,20 +13,23 @@ type opt struct {
 	longhandFlag  string
 }
 
-type Args struct {
-	Usage     string
-	Examples  string
-	FS        *flag.FlagSet
-	Arguments []string
+type Gorgs struct {
+	usage     string
+	examples  string
+	fs        *flag.FlagSet
+	arguments []string
 
 	opts []opt
 }
 
-type ArgsOptions func(*Args) error
+type GorgsOptions func(*Gorgs) error
 
-func NewArgs(arguments []string, options ...ArgsOptions) (*Args, error) {
-	args := &Args{
-		Arguments: arguments,
+// NewGorgs is used to create a new instance of Gorgs
+// The arguments are generally os.Args[1:]
+// options can be used to modify the Gorgs behavior. If they are not passed during creation, you can do so later by calling g.Modify()
+func NewGorgs(arguments []string, options ...GorgsOptions) (*Gorgs, error) {
+	args := &Gorgs{
+		arguments: arguments,
 	}
 
 	if err := args.Modify(options...); err != nil {
@@ -36,26 +39,8 @@ func NewArgs(arguments []string, options ...ArgsOptions) (*Args, error) {
 	return args, nil
 }
 
-// Modify is used to Modify the Args with different stuff like examples or usage
-func (s *Args) Modify(options ...ArgsOptions) error {
-	for _, option := range options {
-		if err := option(s); err != nil {
-			return err
-		}
-	}
-
-	return nil
-}
-
-func (a *Args) getCorrectFs() *flag.FlagSet {
-	if a.FS != nil {
-		return a.FS
-	} else {
-		return flag.CommandLine
-	}
-}
-
-func (a *Args) AddVar(varPtr any, longhand string, shorthand string, defaultValue any, message string) {
+// AddVar adds variables to be parsed later when calling Gorgs.Parse
+func (a *Gorgs) AddVar(varPtr any, longhand string, shorthand string, defaultValue any, message string) {
 	fs := a.getCorrectFs()
 
 	a.opts = append(a.opts, opt{
@@ -104,7 +89,8 @@ func (a *Args) AddVar(varPtr any, longhand string, shorthand string, defaultValu
 	}
 }
 
-func (a *Args) GetUsage() {
+// GetUsage fetches the usage information based on the information given to all the variables that were added
+func (a *Gorgs) GetUsage() {
 	maxShort := 0
 	maxLong := 0
 
@@ -119,7 +105,7 @@ func (a *Args) GetUsage() {
 		}
 	}
 
-	fmt.Println(a.Usage)
+	fmt.Println(a.usage)
 
 	if len(a.opts) > 0 {
 		fmt.Println("Options:")
@@ -148,35 +134,22 @@ func (a *Args) GetUsage() {
 
 		fmt.Printf("    %s    %s    %s\n", short, long, desc)
 	}
-	if a.Examples != "" {
-		fmt.Println(a.Examples)
+	if a.examples != "" {
+		fmt.Println(a.examples)
 	}
 }
 
-func (a *Args) Parse() error {
+// Parse will parse the given cmdline arguments
+func (a *Gorgs) Parse() error {
 	fs := a.getCorrectFs()
 
-	return fs.Parse(a.Arguments)
+	return fs.Parse(a.arguments)
 }
 
-func WithUsage(usage string) ArgsOptions {
-	return func(a *Args) error {
-		a.Usage = usage
-		return nil
-	}
-}
-
-func WithExamples(examples string) ArgsOptions {
-	return func(a *Args) error {
-		a.Examples = examples
-		return nil
-	}
-}
-
-func WithFs(fs *flag.FlagSet) ArgsOptions {
-	return func(a *Args) error {
-		a.FS = fs
-		fs.Usage = a.GetUsage
-		return nil
+func (a *Gorgs) getCorrectFs() *flag.FlagSet {
+	if a.fs != nil {
+		return a.fs
+	} else {
+		return flag.CommandLine
 	}
 }
